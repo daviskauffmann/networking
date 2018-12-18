@@ -34,6 +34,13 @@ int client_start(void)
         WINDOW_HEIGHT,
         0);
 
+    if (!window)
+    {
+        printf("Error: %s\n", SDL_GetError());
+
+        return 1;
+    }
+
     // init SDL_net
     if (SDLNet_Init() != 0)
     {
