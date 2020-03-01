@@ -18,10 +18,31 @@ struct client
     IPaddress udp_address;
 };
 
-int count_clients(void);
-void broadcast(void *data, int len, int exclude_id);
-
 static struct client clients[MAX_CLIENTS];
+
+static int count_clients(void)
+{
+    int num_clients = 0;
+    for (int i = 0; i < MAX_CLIENTS; i++)
+    {
+        if (clients[i].id != -1)
+        {
+            num_clients++;
+        }
+    }
+    return num_clients;
+}
+
+static void broadcast(void *data, int len, int exclude_id)
+{
+    for (int i = 0; i < MAX_CLIENTS; i++)
+    {
+        if (clients[i].id != -1 && clients[i].id != exclude_id)
+        {
+            SDLNet_TCP_SendExt(clients[i].socket, data, len);
+        }
+    }
+}
 
 int server_main(int argc, char *argv[])
 {
@@ -29,7 +50,6 @@ int server_main(int argc, char *argv[])
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         printf("Error: %s\n", SDL_GetError());
-
         return 1;
     }
 
@@ -37,74 +57,60 @@ int server_main(int argc, char *argv[])
     if (SDLNet_Init() != 0)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // setup server info
     IPaddress server_address;
-
     if (SDLNet_ResolveHost(&server_address, INADDR_ANY, SERVER_PORT))
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // open TCP socket
     TCPsocket tcp_socket = SDLNet_TCP_Open(&server_address);
-
     if (!tcp_socket)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     {
         const char *host = SDLNet_ResolveIP(&server_address);
         unsigned short port = SDLNet_Read16(&server_address.port);
-
         printf("TCP: Listening on %s:%i", host, port);
     }
 
     // allocate TCP packet
     TCPpacket *tcp_packet = SDLNet_TCP_AllocPacket(PACKET_SIZE);
-
     if (!tcp_packet)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // open UDP socket
     UDPsocket udp_socket = SDLNet_UDP_Open(SERVER_PORT);
-
     if (!udp_socket)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // allocate UDP packet
     UDPpacket *udp_packet = SDLNet_UDP_AllocPacket(PACKET_SIZE);
-
     if (!udp_packet)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // allocate socket set
     SDLNet_SocketSet socket_set = SDLNet_AllocSocketSet(MAX_CLIENTS + 2);
-
     if (!socket_set)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
@@ -131,29 +137,24 @@ int server_main(int argc, char *argv[])
             {
                 // accept new clients
                 TCPsocket socket = SDLNet_TCP_Accept(tcp_socket);
-
                 if (socket)
                 {
                     // search for an empty client
                     int client_id = -1;
-
                     for (int i = 0; i < MAX_CLIENTS; i++)
                     {
                         if (clients[i].id == -1)
                         {
                             client_id = i;
-
                             break;
                         }
                     }
-
                     if (client_id != -1)
                     {
                         // get socket info
                         IPaddress *address = SDLNet_TCP_GetPeerAddress(socket);
                         const char *host = SDLNet_ResolveIP(address);
                         unsigned short port = SDLNet_Read16(&address->port);
-
                         printf("Connected to client %s:%d\n", host, port);
 
                         // initialize the client
@@ -198,7 +199,6 @@ int server_main(int argc, char *argv[])
                         if (SDLNet_TCP_RecvExt(clients[i].socket, tcp_packet) == 1)
                         {
                             struct data *data = (struct data *)tcp_packet->data;
-
                             switch (data->type)
                             {
                             case DATA_DISCONNECT_REQUEST:
@@ -207,7 +207,6 @@ int server_main(int argc, char *argv[])
                                 IPaddress *address = SDLNet_TCP_GetPeerAddress(clients[i].socket);
                                 const char *host = SDLNet_ResolveIP(address);
                                 unsigned short port = SDLNet_Read16(&address->port);
-
                                 printf("Disconnecting from client %s:%d\n", host, port);
 
                                 // inform other clients
@@ -229,7 +228,6 @@ int server_main(int argc, char *argv[])
                             case DATA_CHAT_REQUEST:
                             {
                                 struct chat_data *chat_data = (struct chat_data *)data;
-
                                 printf("Client %d: %s\n", chat_data->id, chat_data->message);
 
                                 // relay to other clients
@@ -254,13 +252,11 @@ int server_main(int argc, char *argv[])
                 if (SDLNet_UDP_RecvExt(udp_socket, udp_packet) == 1)
                 {
                     struct data *data = (struct data *)udp_packet->data;
-
                     switch (data->type)
                     {
                     case DATA_UDP_CONNECT_REQUEST:
                     {
                         struct id_data *id_data = (struct id_data *)data;
-
                         printf("Saving UDP info of client %d\n", id_data->id);
 
                         // save the UDP address
@@ -270,7 +266,6 @@ int server_main(int argc, char *argv[])
                     case DATA_MOUSEDOWN_REQUEST:
                     {
                         struct mouse_data *mouse_data = (struct mouse_data *)data;
-
                         printf("Client %d mouse down: (%d, %d)\n", mouse_data->id, mouse_data->x, mouse_data->y);
                     }
                     break;
@@ -312,30 +307,4 @@ int server_main(int argc, char *argv[])
     SDL_Quit();
 
     return 0;
-}
-
-int count_clients(void)
-{
-    int num_clients = 0;
-
-    for (int i = 0; i < MAX_CLIENTS; i++)
-    {
-        if (clients[i].id != -1)
-        {
-            num_clients++;
-        }
-    }
-
-    return num_clients;
-}
-
-void broadcast(void *data, int len, int exclude_id)
-{
-    for (int i = 0; i < MAX_CLIENTS; i++)
-    {
-        if (clients[i].id != -1 && clients[i].id != exclude_id)
-        {
-            SDLNet_TCP_SendExt(clients[i].socket, data, len);
-        }
-    }
 }

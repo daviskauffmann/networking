@@ -21,7 +21,6 @@ int client_main(int argc, char *argv[])
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         printf("Error: %s\n", SDL_GetError());
-
         return 1;
     }
 
@@ -37,7 +36,6 @@ int client_main(int argc, char *argv[])
     if (!window)
     {
         printf("Error: %s\n", SDL_GetError());
-
         return 1;
     }
 
@@ -45,7 +43,6 @@ int client_main(int argc, char *argv[])
     if (SDLNet_Init() != 0)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
@@ -55,7 +52,6 @@ int client_main(int argc, char *argv[])
     if (SDLNet_ResolveHost(&server_address, SERVER_HOST, SERVER_PORT))
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
@@ -65,54 +61,44 @@ int client_main(int argc, char *argv[])
     if (!tcp_socket)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     {
         const char *host = SDLNet_ResolveIP(&server_address);
         unsigned short port = SDLNet_Read16(&server_address.port);
-
         printf("TCP: Connected to %s:%i", host, port);
     }
 
     // allocate TCP packet
     TCPpacket *tcp_packet = SDLNet_TCP_AllocPacket(PACKET_SIZE);
-
     if (!tcp_packet)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // open UDP socket
     UDPsocket udp_socket = SDLNet_UDP_Open(0);
-
     if (!udp_socket)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // allocate UDP packet
     UDPpacket *udp_packet = SDLNet_UDP_AllocPacket(PACKET_SIZE);
-
     if (!udp_packet)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
     // allocate socket set
     SDLNet_SocketSet socket_set = SDLNet_AllocSocketSet(2);
-
     if (!socket_set)
     {
         printf("Error: %s\n", SDLNet_GetError());
-
         return 1;
     }
 
@@ -127,29 +113,24 @@ int client_main(int argc, char *argv[])
     if (SDLNet_TCP_RecvExt(tcp_socket, tcp_packet) == 1)
     {
         struct data *data = (struct data *)tcp_packet->data;
-
         switch (data->type)
         {
         case DATA_CONNECT_OK:
         {
             struct id_data *id_data = (struct id_data *)data;
-
             printf("Server assigned ID: %d\n", id_data->id);
-
             client_id = id_data->id;
         }
         break;
         case DATA_CONNECT_FULL:
         {
             printf("Error: Server is full\n");
-
             return 1;
         }
         break;
         default:
         {
             printf("Error: Unknown server response\n");
-
             return 1;
         }
         break;
@@ -225,27 +206,23 @@ int client_main(int argc, char *argv[])
                 if (SDLNet_TCP_RecvExt(tcp_socket, tcp_packet) == 1)
                 {
                     struct data *data = (struct data *)tcp_packet->data;
-
                     switch (data->type)
                     {
                     case DATA_CONNECT_BROADCAST:
                     {
                         struct id_data *id_data = (struct id_data *)data;
-
                         printf("Client with ID %d has joined\n", id_data->id);
                     }
                     break;
                     case DATA_DISCONNECT_BROADCAST:
                     {
                         struct id_data *id_data = (struct id_data *)data;
-
                         printf("Client with ID %d has disconnected\n", id_data->id);
                     }
                     break;
                     case DATA_CHAT_BROADCAST:
                     {
                         struct chat_data *chat_data = (struct chat_data *)data;
-
                         printf("Client %d: %s\n", chat_data->id, chat_data->message);
                     }
                     break;
@@ -264,7 +241,6 @@ int client_main(int argc, char *argv[])
                 if (SDLNet_UDP_RecvExt(udp_socket, udp_packet) == 1)
                 {
                     struct data *data = (struct data *)udp_packet->data;
-
                     switch (data->type)
                     {
                     default:

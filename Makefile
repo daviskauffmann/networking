@@ -1,7 +1,7 @@
 CC := gcc
-CFLAGS := -ggdb -std=c99 -Wall -Wextra -Wpedantic -Wno-unused-parameter `pkg-config --cflags sdl2 sdl2_net`
+CFLAGS := -ggdb -std=c99 -Wall -Wextra -Wpedantic -Wno-unused-parameter `pkg-config --cflags sdl2 sdl2_net` -mconsole
 CPPFLAGS :=
-LDFLAGS := `pkg-config --libs sdl2 sdl2_net`
+LDFLAGS := `pkg-config --libs sdl2 sdl2_net` -mconsole
 LDLIBS :=
 
 SRC	:= \
@@ -28,7 +28,15 @@ obj/%.o: src/%.c
 
 .PHONY: run
 run: all
-	./$(TARGET)
+	./$(TARGET) -h
+
+.PHONY: run_client
+run_client: all
+	./$(TARGET) -c
+
+.PHONY: run_server
+run_server: all
+	./$(TARGET) -s
 
 .PHONY: clean
 clean:
