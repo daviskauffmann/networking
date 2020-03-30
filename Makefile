@@ -1,7 +1,7 @@
 PKGS = sdl2 sdl2_net
 
 CC = gcc
-CFLAGS = -ggdb -std=c99 -Wall -Wextra -Wpedantic -Wno-unused-parameter `pkg-config --cflags $(PKGS)` -mconsole
+CFLAGS = -ggdb -std=c99 -Wall -Wextra -Wpedantic -Wno-unused-parameter `pkg-config --cflags $(PKGS)`
 CPPFLAGS =
 LDFLAGS = `pkg-config --libs $(PKGS)` -mconsole
 LDLIBS =
