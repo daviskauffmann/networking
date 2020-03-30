@@ -1,16 +1,18 @@
-CC := gcc
-CFLAGS := -ggdb -std=c99 -Wall -Wextra -Wpedantic -Wno-unused-parameter `pkg-config --cflags sdl2 sdl2_net` -mconsole
-CPPFLAGS :=
-LDFLAGS := `pkg-config --libs sdl2 sdl2_net` -mconsole
-LDLIBS :=
+PKGS = sdl2 sdl2_net
 
-SRC	:= \
+CC = gcc
+CFLAGS = -ggdb -std=c99 -Wall -Wextra -Wpedantic -Wno-unused-parameter `pkg-config --cflags $(PKGS)` -mconsole
+CPPFLAGS =
+LDFLAGS = `pkg-config --libs $(PKGS)` -mconsole
+LDLIBS =
+
+SRC	= \
 	src/client.c \
 	src/data.c \
 	src/main.c \
 	src/SDL_net_ext.c \
 	src/server.c
-TARGET := bin/networking
+TARGET = bin/networking
 
 .PHONY: all
 all: $(TARGET)
